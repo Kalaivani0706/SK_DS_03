@@ -1,0 +1,55 @@
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+bank_data = pd.read_csv('bank-full.csv', sep=';')
+
+bank_data['y'] = bank_data['y'].map({'yes': 1, 'no': 0})
+categorical_features = ['job', 'marital', 'education', 'default', 'housing', 'loan', 'contact', 'month', 'poutcome']
+bank_data = pd.get_dummies(bank_data, columns=categorical_features, drop_first=True)
+X = bank_data.drop('y', axis=1)
+y = bank_data['y']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+
+dt_classifier = DecisionTreeClassifier(random_state=42)
+dt_classifier.fit(X_train, y_train)
+
+y_pred = dt_classifier.predict(X_test)
+conf_matrix = confusion_matrix(y_test, y_pred)
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', 
+            xticklabels=['Not Purchased ♥️', 'Purchased 💚'], 
+            yticklabels=['Not Purchased ♥️', 'Purchased 💚'], 
+            cbar=True, square=True, linewidths=1, linecolor='black')
+
+for i in range(conf_matrix.shape[0]):
+    for j in range(conf_matrix.shape[1]):
+        plt.text(j + 0.5, i + 0.5, conf_matrix[i, j], ha="center", va="center", color="black")
+
+plt.title('Confusion Matrix with Blue Color Mapping')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.show()
+
+correct_not_purchased = conf_matrix[0, 0]
+incorrect_purchased = conf_matrix[0, 1]
+incorrect_not_purchased = conf_matrix[1, 0]
+correct_purchased = conf_matrix[1, 1]
+
+labels = ['Correct Not Purchased', 'Incorrect Purchased', 'Incorrect Not Purchased', 'Correct Purchased']
+counts = [correct_not_purchased, incorrect_purchased, incorrect_not_purchased, correct_purchased]
+colors = ['red', 'gray', 'gray', 'green']
+
+plt.figure(figsize=(8, 6))
+plt.bar(labels, counts, color=colors, edgecolor='black')
+plt.title('Bar Chart of Model Predictions')
+plt.ylabel('Number of Predictions')
+plt.xticks(rotation=45, ha='right')
+plt.show()
